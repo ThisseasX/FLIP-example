@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>FLIP Example</title>
+
+    <style>
+      .container {
+        display: flex;
+        gap: 32px;
+        justify-content: center;
+        margin-top: 100px;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 32px;
+        font-family: sans-serif;
+        width: 200px;
+        height: 50px;
+        text-align: center;
+        user-select: none;
+      }
+
+      .label {
+        background-color: black;
+        color: white;
+      }
+
+      .item {
+        background-color: aqua;
+        cursor: pointer;
+        will-change: transform;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container"></div>
+
+    <script>
+      const container = document.querySelector('.container');
+
+      const [listA, listB] = [
+        [
+          { id: '1', label: 'One' },
+          { id: '2', label: 'Two' },
+          { id: '3', label: 'Three' },
+        ],
+        [
+          { id: '4', label: 'Four' },
+          { id: '5', label: 'Five' },
+          { id: '6', label: 'Six' },
+        ],
+      ];
+
+      const renderItem = ({ id, label }) => {
+        const el = document.createElement('div');
+
+        el.classList.add('box', 'item');
+        el.id = id;
+        el.textContent = label;
+
+        return el;
+      };
+
+      const renderList = (list, title) => {
+        const el = document.createElement('div');
+        el.classList.add('list');
+
+        const titleEl = document.createElement('div');
+        titleEl.classList.add('box', 'label');
+        titleEl.textContent = title;
+
+        el.appendChild(titleEl);
+
+        list.forEach((item) => {
+          el.appendChild(renderItem(item));
+        });
+
+        return el;
+      };
+
+      const renderPage = () => {
+        container.innerHTML = '';
+        container.appendChild(renderList(listA, 'List A'));
+        container.appendChild(renderList(listB, 'List B'));
+
+        container.querySelectorAll('.item').forEach((el) => {
+          el.onclick = handleClick;
+        });
+      };
+
+      const findItem = ({ id }) => {
+        const aIndex = listA.findIndex((item) => item.id === id);
+        const bIndex = listB.findIndex((item) => item.id === id);
+
+        return aIndex !== -1
+          ? ['a', listA[aIndex], aIndex]
+          : ['b', listB[bIndex], bIndex];
+      };
+
+      const addItem = (list, item) => {
+        const targetList = list === 'a' ? listA : listB;
+        targetList.unshift(item);
+      };
+
+      const removeItem = (list, itemIndex) => {
+        const targetList = list === 'a' ? listA : listB;
+        targetList.splice(itemIndex, 1);
+      };
+
+      const swapLists = (fromList, item, itemIndex) => {
+        const toList = ['a', 'b'].filter((x) => x !== fromList)[0];
+
+        removeItem(fromList, itemIndex);
+        addItem(toList, item);
+      };
+
+      const getCoords = () => {
+        const coords = {};
+
+        container.querySelectorAll('.item').forEach((el) => {
+          const { x, y } = el.getBoundingClientRect();
+          coords[el.id] = { x, y };
+        });
+
+        return coords;
+      };
+
+      const animateElement = (el, beforeCoords, afterCoords) => {
+        const dx = beforeCoords[el.id].x - afterCoords[el.id].x;
+        const dy = beforeCoords[el.id].y - afterCoords[el.id].y;
+
+        el.animate(
+          { transform: `translate3d(${dx}px, ${dy}px, 0)` },
+          {
+            fill: 'both',
+            duration: 500,
+            easing: 'ease-in-out',
+            direction: 'reverse',
+          },
+        );
+      };
+
+      const animateElements = (beforeCoords, afterCoords) => {
+        container.querySelectorAll('.item').forEach((el) => {
+          animateElement(el, beforeCoords, afterCoords);
+        });
+      };
+
+      const handleClick = ({ target }) => {
+        const [listName, foundItem, foundIndex] = findItem(target);
+        swapLists(listName, foundItem, foundIndex);
+        const beforeCoords = getCoords();
+        renderPage();
+        const afterCoords = getCoords();
+        animateElements(beforeCoords, afterCoords);
+      };
+
+      renderPage();
+    </script>
+  </body>
+</html>
